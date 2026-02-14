@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лента сообщений с фоном и гостевой книгой</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('https://fonwall.ru/uploads/wallpapers/city-skyline-night-city-ogys-4k-23134-1920x1080-fonwall.jpg'); /* Новая фоновая фотография */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            scroll-behavior: smooth;
+            color: #333;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+        .main-content {
+            width: 100%;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-bottom: 150px;
+            position: relative;
+            z-index: 1;
+        }
+        .container {
+            width: 80%;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #messagesList {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(233, 233, 235, 0.9);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            word-wrap: break-word;
+        }
+        .message-content {
+            display: flex;
+            flex-direction: column;
+        }
+        .message img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 80px;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(244, 244, 244, 0.9);
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+        }
+        .input-group {
+            width: 80%;
+            max-width: 800px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .input-group button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+        }
+        #nicknameArea {
+            width: 80%;
+            max-width: 800px;
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #nicknameInput, #nicknameDisplay {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        #nicknameInput {
+            flex-grow: 1;
+        }
+        #setNicknameButton {
+            padding: 8px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #setNicknameButton:hover {
+            background-color: #218838;
+        }
+        /* Стили для гостевой книги */
+        .guestbook-container {
+            max-width: 600px;
+            margin: 0 auto 30px auto; /* Добавлен нижний отступ, чтобы не перекрывалось */
+            width: 100%; /* Чтобы занимал всю доступную ширину в рамках родителя */
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        .guestbook-container h3 {
+            text-align: center;
+            margin-top: 0;
+            color: #333;
+        }
+        .guestbook-container input[type="text"],
+        .guestbook-container textarea {
+            width: calc(100% - 20px); /* Учитываем padding */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .guestbook-container button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .guestbook-container button:hover {
+            background: #45a049;
+        }
+        #guestbookMessages {
+            margin-top: 30px;
+        }
+        .guestbook-message {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: rgba(240, 240, 240, 0.9);
+        }
+        .guestbook-message strong {
+            color: #333;
+        }
+        .guestbook-message small {
+            color: #666;
+        }
+        .guestbook-message p {
+            margin-top: 5px;
+            margin-bottom: 0;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="main-content" id="mainContent">
+    <div class="container">
+        <h2>Лента сообщений</h2>
+        <div id="messagesList">
+            <!-- Сообщения из ленты -->
+        </div>
+    </div>
+
+    <!-- Интеграция Гостевой книги -->
+    <div class="guestbook-container">
+        <h3>Гостевая книга</h3>
+        <!-- Поле для ввода имени -->
+        <input type="text" id="guestbookName" placeholder="Ваше имя">
+        <!-- Поле для сообщения -->
+        <textarea id="guestbookMessage" placeholder="Ваше сообщение" rows="4"></textarea>
+        <!-- Кнопки -->
+        <div>
+            <button onclick="saveGuestbookMessage()" id="saveGuestbookButton">Отправить</button>
+            <button onclick="shareGuestbookMessages()" style="background: #2196F3; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; font-size: 16px; margin-left: 10px;">Поделиться сообщениями</button>
+        </div>
+        <!-- Здесь будут показываться сообщения -->
+        <div id="guestbookMessages"></div>
+    </div>
+
+</div>
+
+<div class="input-area">
+    <div id="nicknameArea">
+        <input type="text" id="nicknameInput" placeholder="Введите ваш ник (для сохранения)">
+        <button id="setNicknameButton" onclick="setNickname()">Установить Ник</button>
+        <span id="nicknameDisplay" style="font-weight: bold;"></span>
+    </div>
+    <div class="input-group">
+        <textarea id="messageInput" placeholder="Введите ваше сообщение..."></textarea>
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="sendMessage()">Отправить</button>
+    </div>
+</div>
+
+<script>
+    // --- Логика основной ленты сообщений ---
+    const NICKNAME_STORAGE_KEY = 'chatNickname';
+
+    function setNickname() {
+        const nicknameInput = document.getElementById('nicknameInput');
+        const nicknameDisplay = document.getElementById('nicknameDisplay');
+        const enteredNickname = nicknameInput.value.trim();
+
+        if (enteredNickname) {
+            localStorage.setItem(NICKNAME_STORAGE_KEY, enteredNickname);
+            nicknameDisplay.textContent = `Ваш ник: ${enteredNickname}`;
+            nicknameInput.style.display = 'none';
+            document.getElementById('setNicknameButton').style.display = 'none';
+        } else {
+            alert('Пожалуйста, введите ник.');
+        }
+    }
+
+    window.onload = () => {
+        const savedNickname = localStorage.getItem(NICKNAME_STORAGE_KEY);
+        const nicknameInput = document.getElementById('nicknameInput');
+        const nicknameDisplay = document.getElementById('nicknameDisplay');
+        const setNicknameButton = document.getElementById('setNicknameButton');
+
+        if (savedNickname) {
+            nicknameDisplay.textContent = `Ваш ник: ${savedNickname}`;
+            nicknameInput.style.display = 'none';
+            setNicknameButton.style.display = 'none';
+        }
+        // Прокрутка к низу при загрузке
+        document.getElementById('mainContent').scrollTop = document.getElementById('mainContent').scrollHeight;
+    };
+
+    function addMessage(text, imageUrl = null) {
+        const messagesList = document.getElementById('messagesList');
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+
+        const currentNickname = localStorage.getItem(NICKNAME_STORAGE_KEY) || 'Аноним';
+        const messageSenderSpan = document.createElement('span');
+        messageSenderSpan.textContent = `${currentNickname}: `;
+        messageSenderSpan.style.fontWeight = 'bold';
+        messageSenderSpan.style.marginBottom = '5px';
+        messageSenderSpan.style.color = '#333';
+
+        const messageContentDiv = document.createElement('div');
+        messageContentDiv.classList.add('message-content');
+
+        if (text) {
+            messageContentDiv.appendChild(document.createTextNode(text));
+        }
+        if (imageUrl) {
+            const imgElement = document.createElement('img');
+            imgElement.src = imageUrl;
+            imgElement.alt = "Прикрепленное изображение";
+            messageContentDiv.appendChild(imgElement);
+        }
+
+        messageDiv.appendChild(messageSenderSpan);
+        messageDiv.appendChild(messageContentDiv);
+
+        messagesList.appendChild(messageDiv);
+        // Прокрутка к новому сообщению
+        messageDiv.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function sendMessage() {
+        const messageInput = document.getElementById('messageInput');
+        const imageInput = document.getElementById('imageInput');
+        const messageText = messageInput.value.trim();
+        const file = imageInput.files[0];
+
+        if (messageText || file) {
+            let imageUrl = null;
+            if (file) {
+                imageUrl = URL.createObjectURL(file);
+            }
+            addMessage(messageText, imageUrl);
+            messageInput.value = '';
+            imageInput.value = '';
+        } else {
+            alert('Введите сообщение или выберите изображение.');
+        }
+    }
+
+    document.getElementById('messageInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // --- Логика Гостевой книги ---
+    const GUESTBOOK_STORAGE_KEY = 'forumMessages';
+
+    // Загружаем сообщения из Local Storage при открытии страницы
+    let guestbookMessages = JSON.parse(localStorage.getItem(GUESTBOOK_STORAGE_KEY)) || [];
+
+    function showGuestbookMessages() {
+        const container = document.getElementById('guestbookMessages');
+        // Очищаем предыдущие сообщения перед отображением
+        container.innerHTML = '';
+        // Отображаем сообщения, создавая для каждого div
+        guestbookMessages.map(msg => {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('guestbook-message');
+            msgDiv.innerHTML = `
+                <strong>${msg.name}</strong> <small>${msg.date}</small>
+                <p>${msg.text}</p>
+            `;
+            container.appendChild(msgDiv);
+        });
+    }
+
+    function saveGuestbookMessage() {
+        const nameInput = document.getElementById('guestbookName');
+        const textInput = document.getElementById('guestbookMessage');
+        const name = nameInput.value.trim();
+        const text = textInput.value.trim();
+
+        // Проверяем, что поля не пустые
+        if (!name || !text) {
+            alert('Пожалуйста, заполните имя и сообщение!');
+            return;
+        }
+
+        // Создаем новый объект сообщения
+        const newMessage = {
+            name: name,
+            text: text,
+            date: new Date().toLocaleString() // Получаем текущую дату и время в локальном формате
+        };
+
+        // Добавляем новое сообщение в массив
+        guestbookMessages.push(newMessage);
+
+        // Сохраняем обновленный массив сообщений в Local Storage
+        localStorage.setItem(GUESTBOOK_STORAGE_KEY, JSON.stringify(guestbookMessages));
+
+        // Очищаем поля ввода после сохранения
+        nameInput.value = '';
+        textInput.value = '';
+
+        // Обновляем отображение сообщений
+        showGuestbookMessages();
+    }
+
+    function shareGuestbookMessages() {
+        // Формируем текст для отправки, объединяя имена и сообщения
+        const textToShare = guestbookMessages.map(msg => `${msg.name}: ${msg.text}`).join('\n');
+        // Используем prompt для удобного копирования текста
+        prompt('Скопируйте это сообщение, чтобы поделиться им:', textToShare);
+    }
+
+    // Показываем сообщения гостевой книги при загрузке страницы
+    showGuestbookMessages();
+
+    // Показываем сообщения ленты при загрузке страницы (если они есть)
+    // TODO: Реализовать загрузку сообщений ленты, если они хранятся отдельно
+    // Для примера, добавим пару сообщений, если список пуст
+    if (document.getElementById('messagesList').children.length === 0 && localStorage.getItem('initialMessages') === null) {
+        addMessage("Добро пожаловать в чат!");
+        localStorage.setItem('initialMessages', 'true'); // Отмечаем, что начальные сообщения добавлены
+    }
+
+</script>
+
+</body>
+</html>
