@@ -1,0 +1,84 @@
+<div style="max-width: 600px; margin: 20px auto; font-family: Arial, sans-serif;">
+  <h2>Лента сообщений</h2>
+
+  <!-- Форма отправки -->
+  <div style="background: #f5f5f5; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+    <input type="text" id="userName" placeholder="Ваше имя" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px;">
+    <textarea id="userMessage" placeholder="Напишите сообщение..." rows="3" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+    <button onclick="postMessage()" style="background: #4CAF50; color: white; padding: 10px 25px; border: none; border-radius: 5px; cursor: pointer;">Отправить в ленту</button>
+  </div>
+
+  <!-- Сама лента сообщений -->
+  <div id="messageFeed" style="background: white; border: 1px solid #eee; border-radius: 10px; padding: 15px;">
+    <h3 style="margin-top: 0;">Сообщения:</h3>
+    <div id="messagesList">
+      <!-- Сюда будут добавляться сообщения -->
+    </div>
+  </div>
+</div>
+
+<script>
+// Загружаем сообщения из локального хранилища браузера.
+// Если сообщений нет, инициализируем с одним приветственным сообщением.
+let messages = JSON.parse(localStorage.getItem('forumMessages')) || [
+  { name: 'Админ', text: 'Добро пожаловать в ленту сообщений!', date: new Date().toLocaleString() }
+];
+
+// Функция для отображения всех сообщений в ленте.
+function displayMessages() {
+  const list = document.getElementById('messagesList'); // Получаем элемент, куда будем выводить сообщения.
+
+  // Если сообщений нет, показываем уведомление.
+  if (messages.length === 0) {
+    list.innerHTML = '<p style="color: #999; text-align: center;">Пока нет сообщений. Напишите первое!</p>';
+    return;
+  }
+
+  // Отображаем сообщения. Используем slice().reverse() для показа новых сообщений сверху.
+  // map() преобразует каждое сообщение в HTML-строку.
+  list.innerHTML = messages.slice().reverse().map(msg => `
+    <div style="border-bottom: 1px solid #eee; padding: 15px 0;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <strong style="color: #4CAF50;">${msg.name}</strong>
+        <small style="color: #999;">${msg.date}</small>
+      </div>
+      <p style="margin: 0; line-height: 1.5;">${msg.text}</p>
+    </div>
+  `).join(''); // join('') объединяет все HTML-строки в одну.
+}
+
+// Функция для добавления нового сообщения в ленту.
+function postMessage() {
+  const name = document.getElementById('userName').value.trim(); // Получаем имя пользователя и убираем пробелы.
+  const text = document.getElementById('userMessage').value.trim(); // Получаем текст сообщения и убираем пробелы.
+
+  // Проверяем, что оба поля заполнены.
+  if (!name || !text) {
+    alert('Пожалуйста, заполните имя и сообщение!');
+    return; // Прерываем выполнение, если поля не заполнены.
+  }
+
+  // Создаем объект нового сообщения с текущей датой и временем.
+  const newMessage = {
+    name: name,
+    text: text,
+    date: new Date().toLocaleString()
+  };
+
+  // Добавляем новое сообщение в начало массива.
+  messages.unshift(newMessage);
+
+  // Сохраняем обновленный массив сообщений в локальное хранилище.
+  localStorage.setItem('forumMessages', JSON.stringify(messages));
+
+  // Очищаем поля ввода после отправки.
+  document.getElementById('userName').value = '';
+  document.getElementById('userMessage').value = '';
+
+  // Обновляем отображение ленты, чтобы показать новое сообщение.
+  displayMessages();
+}
+
+// Вызываем функцию отображения сообщений при первой загрузке страницы.
+displayMessages();
+</script>
